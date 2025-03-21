@@ -5,16 +5,24 @@ using UnityEngine.Networking;
 using UnityEngine.UI;
 public class DBConn : MonoBehaviour
 {
-    private string url = "http://localhost/user_login.php";
+    private string url = "http://localhost/UserLogin.php";
     [SerializeField] private User user;
     [SerializeField] private ServerResponse response;
+
+    //
+    private GameScoreManager gameScoreManager;
+
+   
+
+    //
+    public static int user_id { get; private set; }
     public void Username(string username)
     {
-        user.username = username;
+        user.user_name = username;
     }
     public void Password(string password)
     {
-        user.password = password;
+        user.user_password = password;
     }
     public void Login()
     {
@@ -32,31 +40,49 @@ public class DBConn : MonoBehaviour
         if (request.result != UnityWebRequest.Result.Success)
         {
             Debug.Log(request.error);
+            print("terrible");
         }
         else
         {
             string responseText = request.downloadHandler.text;
+            Debug.Log("Server response: " + responseText);
             response = JsonUtility.FromJson<ServerResponse>(responseText);
-            if (response.message == "Login succesful")
+            if (response.message == "Login successful")
             {
+                user_id = response.user_id;
+                print("Login successful, " + user.user_name + " user: " + user_id);
                 SceneHelper.LoadScene(1);
             }
             else
             {
-                print("Login Failed");
+                print("Login failed");
             }
         }
+    }
+    private void Start()
+    {
+        gameScoreManager = GetComponent<GameScoreManager>();
+    }
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+    public void SendTime(int userID, int bestTime)
+    {
+        gameScoreManager.SetUserID(userID);
+        gameScoreManager.SetBestCardTime(bestTime);
+        gameScoreManager.InsertScore();
     }
 }
 [System.Serializable]
 public class User
 {
-    public string username;
-    public string password;
+    public string user_name;
+    public string user_password;
 }
-[System.Serializable]
 public class ServerResponse
 {
     public string message;
+    public int user_id;
 }
 
